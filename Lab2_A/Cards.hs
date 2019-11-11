@@ -19,7 +19,9 @@ suit (Card _ s) = s
 -- | A rank is either a numeric card, a face card, or an ace. The
 -- numeric cards range from two to ten.
 data Rank = Numeric Integer | Jack | Queen | King | Ace
-            deriving (Eq, Show)
+            deriving (Eq, Show, Ord)
+
+
 
 -- | All the different suits.
 data Suit = Hearts | Spades | Diamonds | Clubs
