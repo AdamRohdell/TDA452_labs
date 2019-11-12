@@ -59,6 +59,6 @@ gameOver h
 winner :: Hand -> Hand -> Player
 winner gh bh 
         | gameOver gh = Bank
-        | gameOver bh = Player
+        | gameOver bh = Guest
         | value bh >= value gh = Bank
-        | otherwise = Player
+        | otherwise = Guest
