@@ -59,6 +59,26 @@ gameOver h
 winner :: Hand -> Hand -> Player
 winner gh bh 
         | gameOver gh = Bank
-        | gameOver bh = Player
+        | gameOver bh = Guest
         | value bh >= value gh = Bank
-        | otherwise = Player
+        | otherwise = Guest
+
+(<+) :: Hand -> Hand -> Hand
+(<+) h1 h2 = (<+)' h1 h2 Empty
+        where (<+)' Empty h2 h3 = 
+
+
+
+splitHand'' h = split h Empty Empty 
+         where split Empty    reds blacks = (reds, blacks)  
+               split (Add c h) reds blacks     
+                    | colourCard c == Red = split h (Add c reds) blacks 
+                    | otherwise           = split h reds         (Add c blacks)
+
+
+prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
+prop_onTopOf_assoc p1 p2 p3 =
+    p1<+(p2<+p3) == (p1<+p2)<+p3
+
+prop_size_onTopOf :: Hand -> Hand -> Bool
+prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2) 
