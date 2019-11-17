@@ -28,7 +28,8 @@ display (Add c h)  = displayCard c ++ "\n" ++ display h
 -- Definition for the value of a Rank
 valueRank :: Rank  -> Integer
 valueRank (Numeric n) = n
-valueRank _           = 11
+valueRank Ace         = 11  
+valueRank _           = 10
 
 --Calculates the value of a hand recursively
 initialValue :: Hand -> Integer
