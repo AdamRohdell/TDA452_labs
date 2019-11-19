@@ -92,6 +92,7 @@ prop_onTopOf_assoc p1 p2 p3 =
 
 -- Tests so (<+) do not change the size of the hands
 prop_size_onTopOf :: Hand -> Hand -> Bool
+
 prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2) 
 
 -- Returns a full hand of a suit
@@ -107,44 +108,55 @@ fullSuit s n    = Add(Card (Numeric n) s)(fullSuit s (n-1))
 fullDeck :: Hand
 fullDeck = (fullSuit Hearts 14)<+(fullSuit Clubs 14)<+(fullSuit Spades 14)<+(fullSuit Diamonds 14)
 
+--A function that draws a card from a hand/deck and returns both the hand/deck that was drawn from,
+-- as well as the hand that now contains the drawn card.
 draw :: Hand -> Hand -> (Hand,Hand)
-draw Empty hand        = error "draw: The deck is empty."
-draw (Add c deck) hand = (deck, Add c hand)
+draw Empty h = error "draw: The deck is empty."
+draw (Add c deck) h2 = (deck, (Add c h2))
 
-playBankHelper:: Hand -> Hand -> Hand
-playBankHelper deck hand
-        | value hand >= 16 = hand                
-        | otherwise        = playBankHelper smallerDeck biggerHand
-                where (smallerDeck,biggerHand) = draw deck hand
-
+--A function that plays the round for the Bank and returns it's final hand
 playBank :: Hand -> Hand
-playBank deck  = playBankHelper deck Empty 
+playBank deck =  playBankHelper deck Empty
 
-shuffleDeck :: StdGen -> Hand -> Hand -- Should only take in one hand
-shuffleDeck g h  = shuffleDeck' g h Empty
-        where shuffleDeck' g Empty h1 = h1
+--Helper function to let the bank draw card. 
+playBankHelper :: Hand -> Hand -> Hand
+playBankHelper deck hand 
+        | value hand >= 16 = hand
+        | otherwise       = playBankHelper smallerDeck biggerHand
+                where (smallerDeck, biggerHand) = draw deck hand
+
+
+
+--A function that shuffles a hand and returns the shuffled hand.
+shuffleDeck :: StdGen -> Hand -> Hand
+shuffleDeck g Empty = Empty
+shuffleDeck g h     = shuffleDeck' g h Empty
+        where shuffleDeck' g Empty h1 = h1 
               shuffleDeck' g h h1     = shuffleDeck' g' newHand (Add removedCard h1)
-                 where (removedCard, newHand)  = removeNth rndNumber h
-                       (rndNumber, g')         = randomR (1, size h) g
+                        where (removedCard, newHand)  = removeNth rndNumber h
+                              (rndNumber, g')         = randomR (1,size h) g
+                        
 
+
+-- A function that removes then N:th card of a Hand, counted from the top.
 removeNth :: Integer -> Hand -> (Card, Hand)
-removeNth 1 (Add c h) = (c, h)
-removeNth n (Add c h) = (c', Add c h')
-        where (c', h') = removeNth (n-1) h
+removeNth  1 (Add c h) = (c , h)
+removeNth  n (Add c h) = (c', Add c h')
+        where (c', h') = removeNth (n - 1) h  
 
+--A property that checks if a shuffled hand still contains the same cards
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h =
+        c `belongsTo` h == c `belongsTo` shuffleDeck g h
+
+-- A function to check if a card belongs to a hand
 belongsTo :: Card -> Hand -> Bool
 c `belongsTo` Empty = False
 c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 
-prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
-prop_shuffle_sameCards g c h =
-    c `belongsTo` h == c `belongsTo` shuffleDeck g h
 
+--Proprty to test that a shuffled hand still has the same size
 prop_size_shuffle :: StdGen -> Hand -> Bool
-prop_size_shuffle g h = size h == size(shuffleDeck g h)
-
-
-
-
+prop_size_shuffle g h = size h == size (shuffleDeck g h)
 
 
