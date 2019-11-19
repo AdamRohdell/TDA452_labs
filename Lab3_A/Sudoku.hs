@@ -36,21 +36,25 @@ example =
 
 -- | allBlankSudoku is a sudoku with just blanks
 allBlankSudoku :: Sudoku
-allBlankSudoku = undefined
+allBlankSudoku = Sudoku rs
+      where rs = [cs, cs, cs, cs, cs, cs, cs, cs, cs]
+            cs = [n, n, n, n, n, n, n, n, n]
+            n  = Nothing
 
 -- * A2
 
 -- | isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku = undefined
+isSudoku sud = and [not(rows sud == []), 
+                    length [length cs == 9 | cs <- rows sud] == 9]
 
 -- * A3
 
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled = undefined
+isFilled = 
 
 ------------------------------------------------------------------------------
 
