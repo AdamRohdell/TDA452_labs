@@ -12,7 +12,9 @@ hand2 = Add (Card (Numeric 2) Hearts)
 -- A function for checking that all steps of the size function works and gives the same response.
 sizeSteps :: [Integer]
 sizeSteps = [size hand2, size (Add (Card (Numeric 2) Hearts)(Add (Card Jack Spades) Empty)),
-        size (Add (Card Jack Spades) Empty) + 1, 2]
+             size (Add (Card Jack Spades) Empty) + 1, 
+             size (Empty + 2), 
+             2]
 
 -- A nice way to print out a Card.
 displayCard :: Card -> String
