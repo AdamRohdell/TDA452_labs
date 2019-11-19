@@ -2,6 +2,22 @@ module BlackJack where
 import Cards
 import RunGame
 import Test.QuickCheck
+import System.Random
+
+
+implementation = Interface
+        { iFullDeck = fullDeck
+        , iValue    = value
+        , iDisplay  = display
+        , iGameOver = gameOver
+        , iWinner   = winner 
+        , iDraw     = draw
+        , iPlayBank = playBank
+        , iShuffle  = shuffleDeck
+}
+
+main :: IO ()
+main = runGame implementation
 
 -- A test-hand for testing our functions inputs.
 hand2 = Add (Card (Numeric 2) Hearts)
@@ -28,7 +44,8 @@ display (Add c h)  = displayCard c ++ "\n" ++ display h
 -- Definition for the value of a Rank
 valueRank :: Rank  -> Integer
 valueRank (Numeric n) = n
-valueRank _           = 11
+valueRank Ace         = 11
+valueRank _           = 10
 
 --Calculates the value of a hand recursively
 initialValue :: Hand -> Integer
@@ -63,7 +80,10 @@ winner gh bh
         | value bh >= value gh = Bank
         | otherwise = Guest
 
+
 (<+) :: Hand -> Hand -> Hand
+(<+) Empty h2 = h2
+(<+) (Add c h) Empty = (Add c h) 
 (<+) (Add c h) h2 = Add c (h <+ h2)
 
 
@@ -72,4 +92,73 @@ prop_onTopOf_assoc p1 p2 p3 =
     p1<+(p2<+p3) == (p1<+p2)<+p3
 
 prop_size_onTopOf :: Hand -> Hand -> Bool
-prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2) 
+prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2)
+
+
+fullSuit :: Integer -> Suit -> Hand
+fullSuit 14 s   = Add (Card Ace s) (fullSuit 13 s) 
+fullSuit 13 s  = Add (Card King s) (fullSuit 12 s)
+fullSuit 12 s = Add (Card Queen s) (fullSuit 11 s)
+fullSuit 11 s  = Add (Card Jack s) (fullSuit 10 s)
+fullSuit r s 
+        | r > 1 = Add (Card (Numeric r) s) (fullSuit (r-1) s)
+        | otherwise = Empty
+
+fullDeck :: Hand
+fullDeck = (fullSuit 14 Hearts) <+
+           (fullSuit 14 Spades) <+
+           (fullSuit 14 Clubs)  <+
+           (fullSuit 14 Diamonds)
+
+--A function that draws a card from a hand/deck and returns both the hand/deck that was drawn from,
+-- as well as the hand that now contains the drawn card.
+draw :: Hand -> Hand -> (Hand,Hand)
+draw Empty h = error "draw: The deck is empty."
+draw (Add c deck) h2 = (deck, (Add c h2))
+
+--A function that plays the round for the Bank and returns it's final hand
+playBank :: Hand -> Hand
+playBank deck =  playBankHelper deck Empty
+
+--Helper function to let the bank draw card. 
+playBankHelper :: Hand -> Hand -> Hand
+playBankHelper deck hand 
+        | value hand >= 16 = hand
+        | otherwise       = playBankHelper smallerDeck biggerHand
+                where (smallerDeck, biggerHand) = draw deck hand
+
+
+
+--A function that shuffles a hand and returns the shuffled hand.
+shuffleDeck :: StdGen -> Hand -> Hand
+shuffleDeck g Empty = Empty
+shuffleDeck g h     = shuffleDeck' g h Empty
+        where shuffleDeck' g Empty h1 = h1 
+              shuffleDeck' g h h1     = shuffleDeck' g' newHand (Add removedCard h1)
+                        where (removedCard, newHand)  = removeNth rndNumber h
+                              (rndNumber, g')         = randomR (1,size h) g
+                        
+
+
+-- A function that removes then N:th card of a Hand, counted from the top.
+removeNth :: Integer -> Hand -> (Card, Hand)
+removeNth  1 (Add c h) = (c , h)
+removeNth  n (Add c h) = (c', Add c h')
+        where (c', h') = removeNth (n - 1) h  
+
+--A property that checks if a shuffled hand still contains the same cards
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h =
+        c `belongsTo` h == c `belongsTo` shuffleDeck g h
+
+-- A function to check if a card belongs to a hand
+belongsTo :: Card -> Hand -> Bool
+c `belongsTo` Empty = False
+c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+
+--Proprty to test that a shuffled hand still has the same size
+prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle g h = size h == size (shuffleDeck g h)
+
+
