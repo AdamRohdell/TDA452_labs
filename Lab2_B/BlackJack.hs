@@ -64,16 +64,7 @@ winner gh bh
         | otherwise = Guest
 
 (<+) :: Hand -> Hand -> Hand
-(<+) h1 h2 = (<+)' h1 h2 Empty
-        where (<+)' Empty h2 h3 = 
-
-
-
-splitHand'' h = split h Empty Empty 
-         where split Empty    reds blacks = (reds, blacks)  
-               split (Add c h) reds blacks     
-                    | colourCard c == Red = split h (Add c reds) blacks 
-                    | otherwise           = split h reds         (Add c blacks)
+(<+) (Add c h) h2 = Add c (h <+ h2)
 
 
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
