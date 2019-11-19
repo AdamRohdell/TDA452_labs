@@ -2,12 +2,27 @@ module BlackJack where
 import Cards
 import RunGame
 import Test.QuickCheck
+import System.Random
+
+implementation = Interface
+  { iFullDeck = fullDeck
+  , iValue    = value
+  , iDisplay  = display
+  , iGameOver = gameOver
+  , iWinner   = winner 
+  , iDraw     = draw
+  , iPlayBank = playBank
+  , iShuffle  = shuffleDeck
+  }
+
+
+main :: IO ()
+main = runGame implementation
+
 
 -- A test-hand for testing our functions inputs.
 hand2 = Add (Card (Numeric 2) Hearts)
             (Add (Card Jack Spades) Empty)
-
-
 
 -- A function for checking that all steps of the size function works and gives the same response.
 sizeSteps :: [Integer]
@@ -28,7 +43,8 @@ display (Add c h)  = displayCard c ++ "\n" ++ display h
 -- Definition for the value of a Rank
 valueRank :: Rank  -> Integer
 valueRank (Numeric n) = n
-valueRank _           = 11
+valueRank Ace         = 11
+valueRank _           = 10
 
 --Calculates the value of a hand recursively
 initialValue :: Hand -> Integer
@@ -63,13 +79,72 @@ winner gh bh
         | value bh >= value gh = Bank
         | otherwise = Guest
 
+-- Adds two hands together, putting the first one on top of the other hand
 (<+) :: Hand -> Hand -> Hand
+(<+) Empty h2     = h2
+(<+) h1 Empty     = h1
 (<+) (Add c h) h2 = Add c (h <+ h2)
 
-
+-- Tests if (<+) is associative
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 =
     p1<+(p2<+p3) == (p1<+p2)<+p3
 
+-- Tests so (<+) do not change the size of the hands
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2) 
+
+-- Returns a full hand of a suit
+fullSuit :: Suit -> Integer-> Hand
+fullSuit s 14   = Add(Card Ace s)(fullSuit s 13)
+fullSuit s 13   = Add(Card King s)(fullSuit s 12)
+fullSuit s 12   = Add(Card Queen s)(fullSuit s 11)
+fullSuit s 11   = Add(Card Jack s)(fullSuit s 10)
+fullSuit s 1    = Empty
+fullSuit s n    = Add(Card (Numeric n) s)(fullSuit s (n-1))
+
+-- Returns an entire deck with all 52 cards
+fullDeck :: Hand
+fullDeck = (fullSuit Hearts 14)<+(fullSuit Clubs 14)<+(fullSuit Spades 14)<+(fullSuit Diamonds 14)
+
+draw :: Hand -> Hand -> (Hand,Hand)
+draw Empty hand        = error "draw: The deck is empty."
+draw (Add c deck) hand = (deck, Add c hand)
+
+playBankHelper:: Hand -> Hand -> Hand
+playBankHelper deck hand
+        | value hand >= 16 = hand                
+        | otherwise        = playBankHelper smallerDeck biggerHand
+                where (smallerDeck,biggerHand) = draw deck hand
+
+playBank :: Hand -> Hand
+playBank deck  = playBankHelper deck Empty 
+
+shuffleDeck :: StdGen -> Hand -> Hand -- Should only take in one hand
+shuffleDeck g h  = shuffleDeck' g h Empty
+        where shuffleDeck' g Empty h1 = h1
+              shuffleDeck' g h h1     = shuffleDeck' g' newHand (Add removedCard h1)
+                 where (removedCard, newHand)  = removeNth rndNumber h
+                       (rndNumber, g')         = randomR (1, size h) g
+
+removeNth :: Integer -> Hand -> (Card, Hand)
+removeNth 1 (Add c h) = (c, h)
+removeNth n (Add c h) = (c', Add c h')
+        where (c', h') = removeNth (n-1) h
+
+belongsTo :: Card -> Hand -> Bool
+c `belongsTo` Empty = False
+c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h =
+    c `belongsTo` h == c `belongsTo` shuffleDeck g h
+
+prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle g h = size h == size(shuffleDeck g h)
+
+
+
+
+
+
