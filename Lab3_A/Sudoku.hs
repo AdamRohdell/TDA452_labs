@@ -45,9 +45,19 @@ allBlankSudoku = Sudoku rs
 
 -- | isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
+removeMaybe :: Maybe Int -> Int
+removeMaybe Nothing = 0
+removeMaybe (Just i)  = i
+
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
-                    length [length cs == 9 | cs <- rows sud] == 9]
+                    length[ length cs == 9 |cs <- rows sud] == 9,
+                    (i == Nothing || (removeMaybe i < 10 && removeMaybe i > 0))]
+                       where i = undefined
+                    
+                    
+                    ---where i = (i <- [cs | cs <- rows sud]
+                      
 
 -- * A3
 
