@@ -49,11 +49,28 @@ removeMaybe :: Maybe Int -> Int
 removeMaybe Nothing = 0
 removeMaybe (Just i)  = i
 
+isValidNumber :: Int -> Bool
+isValidNumber i 
+          | i > 9     = False
+          | i < 0     = False
+          | otherwise = True
+
+validCellsOfRow :: [Cell] -> [Bool]
+validCellsOfRow []     = [True]
+validCellsOfRow (c:cs) = isValidNumber (removeMaybe c) : validCellsOfRow cs
+
+
+validRowsOfSudoku :: [Row] -> [Bool]
+validRowsOfSudoku []  = [True]
+validRowsOfSudoku (r:rs) = and (validCellsOfRow r) : validRowsOfSudoku rs
+
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
                     length[ length cs == 9 |cs <- rows sud] == 9,
-                      isValid]
-                       where isValid = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9 
+                      and $ validRowsOfSudoku (rows sud)]
+                       
+                             
+                             
                       
 
 -- * A3
@@ -61,7 +78,7 @@ isSudoku sud = and [not(rows sud == []),
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled = undefined
+isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9
 
 ------------------------------------------------------------------------------
 
