@@ -52,11 +52,8 @@ removeMaybe (Just i)  = i
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
                     length[ length cs == 9 |cs <- rows sud] == 9,
-                    (i == Nothing || (removeMaybe i < 10 && removeMaybe i > 0))]
-                       where i = undefined
-                    
-                    
-                    ---where i = (i <- [cs | cs <- rows sud]
+                      isValid]
+                       where isValid = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9 
                       
 
 -- * A3
@@ -64,7 +61,7 @@ isSudoku sud = and [not(rows sud == []),
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled = 
+isFilled = undefined
 
 ------------------------------------------------------------------------------
 
