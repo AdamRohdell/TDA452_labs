@@ -32,6 +32,23 @@ example =
     n = Nothing
     j = Just
 
+example2 :: Sudoku
+example2 =
+    Sudoku
+      [ [j 3,j 6,j 2,j 2,j 7,j 1,j 2,j 3,j 3]
+      , [j 5,j 5,j 2,j 2,j 1,j 2,j 1,j 8,j 3]
+      , [j 5,j 6,j 9,j 2,j 1,j 4,j 7,j 3,j 4]
+      , [j 5,j 7,j 1,j 1,j 1,j 3,j 3,j 2,j 8]
+      , [j 4,j 8,j 1,j 5,j 1,j 2,j 3,j 3,j 9]
+      , [j 2,j 7,j 2,j 4,j 6,j 9,j 9,j 7,j 5]
+      , [j 5,j 9,j 5,j 3,j 1,j 8,j 9,j 7,j 5]
+      , [j 5,j 8,j 3,j 1,j 1,j 7,j 8,j 6,j 5]
+      , [j 5,j 5,j 7,j 6,j 9,j 5,j 5,j 4,j 3]
+      ]
+  where
+    n = Nothing
+    j = Just
+
 -- * A1
 
 -- | allBlankSudoku is a sudoku with just blanks
@@ -78,7 +95,9 @@ isSudoku sud = and [not(rows sud == []),
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9
+isFilled sud = all checkEmpty (rows sud)
+      where 
+            checkEmpty cells =  and $ map (\val -> (removeMaybe val) <= 9 && (removeMaybe val) >= 1) cells
 
 ------------------------------------------------------------------------------
 
