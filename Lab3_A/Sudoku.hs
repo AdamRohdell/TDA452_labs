@@ -50,7 +50,7 @@ removeMaybe Nothing = 0
 removeMaybe (Just i)  = i
 
 isValidNumber :: Int -> Bool
-isValidNumber i 
+isValidNumber i =
           | i > 9     = False
           | i < 0     = False
           | otherwise = True
@@ -67,18 +67,16 @@ validRowsOfSudoku (r:rs) = and (validCellsOfRow r) : validRowsOfSudoku rs
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
                     length[ length cs == 9 |cs <- rows sud] == 9,
-                      and $ validRowsOfSudoku (rows sud)]
-                       
-                             
-                             
-                      
+                      and $ validRowsOfSudoku (rows sud)]                  
 
 -- * A3
 
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9
+isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9  -- what? Is this right? Explain
+
+--isFilled sud = [i == Nothing| i <- [cs | cs <- rows sud]]
 
 ------------------------------------------------------------------------------
 
@@ -87,7 +85,14 @@ isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku = undefined
+printSudoku sud = [printRows(cs) | cs <- rows sud]
+      
+
+printRows :: [Cell] -> IO ()
+printRows row
+      | [i | i <- cs] == Nothing = putStrLn "."
+      | [putStrLn(removeMaybe (i)) | i <- [cs | cs <- rows sud]]  
+
 
 -- * B2
 
