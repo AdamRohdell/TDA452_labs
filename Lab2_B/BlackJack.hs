@@ -92,21 +92,23 @@ prop_onTopOf_assoc p1 p2 p3 =
 
 -- Tests so (<+) do not change the size of the hands
 prop_size_onTopOf :: Hand -> Hand -> Bool
-
 prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2) 
 
--- Returns a full hand of a suit
-fullSuit :: Suit -> Integer-> Hand
-fullSuit s 14   = Add(Card Ace s)(fullSuit s 13)
-fullSuit s 13   = Add(Card King s)(fullSuit s 12)
-fullSuit s 12   = Add(Card Queen s)(fullSuit s 11)
-fullSuit s 11   = Add(Card Jack s)(fullSuit s 10)
-fullSuit s 1    = Empty
-fullSuit s n    = Add(Card (Numeric n) s)(fullSuit s (n-1))
+
+--Turns a list of Cards into a Hand
+addCardListToHand :: [Card] -> Hand
+addCardListToHand (c:cs) = Add c (addCardListToHand cs)
+
 
 -- Returns an entire deck with all 52 cards
+
 fullDeck :: Hand
-fullDeck = (fullSuit Hearts 14)<+(fullSuit Clubs 14)<+(fullSuit Spades 14)<+(fullSuit Diamonds 14)
+fullDeck = addCardListToHand allCards 
+        where ranks    = [Numeric n | n <- [2..9]] ++ [Jack,Queen,King,Ace]
+              suits    = [Hearts, Spades, Clubs, Diamonds]
+              allCards = [Card r s | r <- ranks, s <- suits]
+        
+        
 
 --A function that draws a card from a hand/deck and returns both the hand/deck that was drawn from,
 -- as well as the hand that now contains the drawn card.
@@ -140,6 +142,7 @@ shuffleDeck g h     = shuffleDeck' g h Empty
 
 -- A function that removes then N:th card of a Hand, counted from the top.
 removeNth :: Integer -> Hand -> (Card, Hand)
+removeNth  _ Empty     = error "Hand is empty"
 removeNth  1 (Add c h) = (c , h)
 removeNth  n (Add c h) = (c', Add c h')
         where (c', h') = removeNth (n - 1) h  
