@@ -48,9 +48,9 @@ allBlankSudoku = Sudoku rs
 removeMaybe :: Maybe Int -> Int
 removeMaybe Nothing = 0
 removeMaybe (Just i)  = i
-
+--Allting jag skrev fungerar va?
 isValidNumber :: Int -> Bool
-isValidNumber i =
+isValidNumber i
           | i > 9     = False
           | i < 0     = False
           | otherwise = True
@@ -74,7 +74,9 @@ isSudoku sud = and [not(rows sud == []),
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9  -- what? Is this right? Explain
+isFilled sud = all checkEmpty (rows sud)
+      where 
+            checkEmpty cells =  and $ map (\val -> (removeMaybe val) <= 9 && (removeMaybe val) >= 1) cells
 
 --isFilled sud = [i == Nothing| i <- [cs | cs <- rows sud]]
 
@@ -85,16 +87,23 @@ isFilled sud = length [ map removeMaybe i | i <- [cs | cs <- rows sud]] == 9  --
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku sud = [printRows(cs) | cs <- rows sud]
+printSudoku sud =  putStr (printCell (rows sud))
+        where
+
       
 
-printRows :: [Cell] -> IO ()
-printRows row
-      | [i | i <- cs] == Nothing = putStrLn "."
-      | [putStrLn(removeMaybe (i)) | i <- [cs | cs <- rows sud]]  
-
-
--- * B2
+printCell :: Maybe Int -> IO ()
+printCell [] = putStrLn "\n"
+printCell (c:cs)
+      | c == Nothing = putStrLn "." ++ printCell cs
+      | otherwise = putStrLn (show(removeMaybe c)) ++ printCell cs
+kolla på min lösning för isFilled
+Där gör jag en lambda funktion för alla värden i en row ([Cell])
+Vi vill nog göra samma här
+blir det samma när det är io dock... 
+Ja för det är ej rekursion, så borde fungera!
+mmm
+          -- * B2
 
 -- | readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
