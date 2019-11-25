@@ -93,7 +93,7 @@ isSudoku sud = and [not(rows sud == []),
 isFilled :: Sudoku -> Bool
 isFilled sud = all checkEmpty (rows sud)
       where 
-            checkEmpty cells =  and $ map (\val -> (removeMaybe val) <= 9 && (removeMaybe val) >= 1) cells
+            checkEmpty cells =  all (\val -> val /= Nothing) cells
 
 --isFilled sud = [i == Nothing| i <- [cs | cs <- rows sud]]
 
@@ -103,23 +103,25 @@ isFilled sud = all checkEmpty (rows sud)
 
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
+stringListToString :: [String] -> String
+stringListToString []     = "" 
+stringListToString (s:ss) = s ++ stringListToString ss
+
 printSudoku :: Sudoku -> IO ()
-printSudoku sud =  putStr (printCell (rows sud))
-        where
+printSudoku sud =  putStr (printRow (rows sud))
+        where   printRow rs = stringListToString $ map show (map printCells rs) ++ ["\n"]
+                printCells = map printCell
+                printCell n 
+                      | n == Nothing = "."
+                      | otherwise    = show n
 
       
 
-printCell :: Maybe Int -> IO ()
-printCell [] = putStrLn "\n"
-printCell (c:cs)
-      | c == Nothing = putStrLn "." ++ printCell cs
-      | otherwise = putStrLn (show(removeMaybe c)) ++ printCell cs
-kolla på min lösning för isFilled
-Där gör jag en lambda funktion för alla värden i en row ([Cell])
-Vi vill nog göra samma här
-blir det samma när det är io dock... 
-Ja för det är ej rekursion, så borde fungera!
-mmm
+--printCell :: Maybe Int -> IO ()
+--printCell [] = putStrLn "\n"
+--printCell (c:cs)
+--      | c == Nothing = putStrLn "." ++ printCell cs
+--      | otherwise = putStrLn (show(removeMaybe c)) ++ printCell cs
           -- * B2
 
 -- | readSudoku file reads from the file, and either delivers it, or stops
