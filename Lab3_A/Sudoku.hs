@@ -2,6 +2,7 @@ module Sudoku where
 
 import Test.QuickCheck
 import Data.Char
+import Data.List
 
 ------------------------------------------------------------------------------
 
@@ -49,6 +50,23 @@ example2 =
   where
     n = Nothing
     j = Just
+
+example3 :: Sudoku
+example3   =
+    Sudoku
+        [ [j 3  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        ]
+  where
+    n = Nothing
+    j = Just    
 
 -- * A1
 
@@ -190,27 +208,58 @@ prop_Sudoku sud = isSudoku sud
   
 ------------------------------------------------------------------------------
 
-type Block = [Cell] -- a Row is also a Cell
+type Block = [Cell] -- a Row is also a [Cell]
 
 
 -- * D1
-
 isOkayBlock :: Block -> Bool
-isOkayBlock = undefined
+isOkayBlock []     = True
+isOkayBlock (c:cs) 
+          | c == Nothing = True && isOkayBlock cs 
+          | otherwise    = notElem c cs && isOkayBlock cs 
 
 
 -- * D2
 
 blocks :: Sudoku -> [Block]
-blocks = undefined
+blocks (Sudoku rs)= rs ++ collumnsFromRows rs ++ blocksFromRows rs
+      where
+        collumnsFromRows ms   = transpose ms
+
+        blocksFromRows ls     = makeBlockRows $ makeAllTripples ls
+
+        makeBlockRows ks      = makeBlockRow (take 3 ks) ++ makeBlockRow (take 3 (drop 3 ks)) ++ makeBlockRow (drop 6 ks)
+        makeBlockRow rs1      = [takeFirst rs1, takeSecond rs1, takeThird rs1]
+        
+        takeFirst :: [[Cell]] -> [Cell]
+        takeFirst []          = []
+        takeFirst (x:xs)      = take 1 x ++ takeFirst xs
+        
+        takeSecond []         = []
+        takeSecond (x:xs)     = take 1 (drop 1 x) : takeSecond xs
+        
+        takeThird []          = []
+        takeThird (x:xs)      = drop 2 x : takeThird xs
+
+        makeAllTripples []    = []
+        makeAllTripples (x:xs)= [take 1 k, take 1 (drop 1 k), drop 2 k] : makeAllTripples xs
+            where 
+                  k = makeTripplesFromRow x
+
+        makeTripplesFromRow :: Row -> [[Cell]]
+        makeTripplesFromRow r =  [take 3 r, take 3 (drop 3 r), drop 6 r]
+      
 
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths = undefined
+prop_blocks_lengths sud = length([length c == 9 | c <- blocks sud]) == 27
 
 -- * D3
 
 isOkay :: Sudoku -> Bool
-isOkay = undefined
+isOkay sud              = isOkay' (blocks sud)
+    where
+        isOkay' []      = True
+        isOkay' (b:bl)  = isOkayBlock b && isOkay' bl
 
 
 ---- Part A ends here --------------------------------------------------------
