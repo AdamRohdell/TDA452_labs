@@ -1,6 +1,7 @@
 module Sudoku where
 
 import Test.QuickCheck
+import Data.Char
 
 ------------------------------------------------------------------------------
 
@@ -103,31 +104,61 @@ isFilled sud = all checkEmpty (rows sud)
 
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
-stringListToString :: [String] -> String
-stringListToString []     = "" 
-stringListToString (s:ss) = s ++ stringListToString ss
+
 
 printSudoku :: Sudoku -> IO ()
-printSudoku sud =  putStr (printRow (rows sud))
-        where   printRow rs = stringListToString $ map show (map printCells rs) ++ ["\n"]
-                printCells = map printCell
-                printCell n 
-                      | n == Nothing = "."
-                      | otherwise    = show n
+printSudoku sud =  putStr (printRows (rows sud))
+        where   
+            printRows :: [Row] -> String
+            printRows []     = ""
+            printRows (r:rs) = printCells r ++ printRows rs
+
+            printCells :: [Cell] -> String
+            printCells []     = "\n"
+            printCells (c:cs) = printCell c ++ printCells cs
+
+            printCell :: Cell -> String
+            printCell n 
+                  | n == Nothing = "."
+                  | otherwise    = show (removeMaybe n) 
 
       
 
---printCell :: Maybe Int -> IO ()
---printCell [] = putStrLn "\n"
---printCell (c:cs)
---      | c == Nothing = putStrLn "." ++ printCell cs
---      | otherwise = putStrLn (show(removeMaybe c)) ++ printCell cs
-          -- * B2
+
+-- * B2
 
 -- | readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
 readSudoku :: FilePath -> IO Sudoku
-readSudoku = undefined
+readSudoku filePath = do
+                s <- readFile filePath
+                isSudoku' $ (Sudoku (parseSudoku s))
+                where
+                  parseSudoku s = parseRows $ lines s
+                  parseRows :: [[Char]] -> [Row]                  
+                  parseRows []   = []
+                  parseRows (r:rs)  = parseCells r : parseRows rs
+                  
+                  parseCells :: [Char] -> [Maybe Int]
+                  parseCells []  = []
+                  parseCells (c:cs) = parseCell c : parseCells cs
+                  
+                  parseCell :: Char -> Maybe Int 
+                  parseCell c 
+                        | c == '.'  = Nothing
+                        | otherwise = Just (digitToInt $ c)
+                  isSudoku' :: Sudoku -> IO Sudoku
+                  isSudoku' sud 
+                            | isSudoku sud = return sud
+                            | otherwise    = error "Not a Sudoku!"
+                
+
+                 
+      
+        
+        
+
+
 
 ------------------------------------------------------------------------------
 
@@ -135,21 +166,26 @@ readSudoku = undefined
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen (Cell)
-cell = undefined
+cell = frequency[(9, return Nothing), (1, do 
+                                            n <- choose(1,9)
+                                            return (Just n))]
+      
 
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
-  arbitrary = undefined
+  arbitrary = do
+                rs <- (vectorOf 9 (vectorOf 9 cell))
+                return $ Sudoku rs
 
  -- hint: get to know the QuickCheck function vectorOf
  
 -- * C3
 
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku = undefined
+prop_Sudoku sud = isSudoku sud
   -- hint: this definition is simple!
   
 ------------------------------------------------------------------------------
