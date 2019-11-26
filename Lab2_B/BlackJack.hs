@@ -97,6 +97,7 @@ prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2)
 
 --Turns a list of Cards into a Hand
 addCardListToHand :: [Card] -> Hand
+addCardListToHand Empty  = cs
 addCardListToHand (c:cs) = Add c (addCardListToHand cs)
 
 
