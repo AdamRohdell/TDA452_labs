@@ -79,27 +79,29 @@ allBlankSudoku = Sudoku rs
 
 -- * A2
 
--- | isSudoku sud checks if sud is really a valid representation of a sudoku
--- puzzle
+--Returns the actual value of a Maybe Int as either 0 or the Int
 removeMaybe :: Maybe Int -> Int
 removeMaybe Nothing = 0
 removeMaybe (Just i)  = i
---Allting jag skrev fungerar va?
+
+--Checks if a number is a valid number to use in a Sudoku
 isValidNumber :: Int -> Bool
 isValidNumber i
           | i > 9     = False
           | i < 0     = False
           | otherwise = True
 
+--Checks if the cells in a Sudoku row are valid
 validCellsOfRow :: [Cell] -> [Bool]
 validCellsOfRow []     = [True]
 validCellsOfRow (c:cs) = isValidNumber (removeMaybe c) : validCellsOfRow cs
 
-
+--Checks if rows of a Sudoku is valid
 validRowsOfSudoku :: [Row] -> [Bool]
 validRowsOfSudoku []  = [True]
 validRowsOfSudoku (r:rs) = and (validCellsOfRow r) : validRowsOfSudoku rs
 
+--isSudoku checks if a Sudoku is a valid sudoku according to standard sudoku-rules
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
                     length[ length cs == 9 |cs <- rows sud] == 9,
@@ -113,8 +115,6 @@ isFilled :: Sudoku -> Bool
 isFilled sud = all checkEmpty (rows sud)
       where 
             checkEmpty cells =  all (\val -> val /= Nothing) cells
-
---isFilled sud = [i == Nothing| i <- [cs | cs <- rows sud]]
 
 ------------------------------------------------------------------------------
 
@@ -201,7 +201,7 @@ instance Arbitrary Sudoku where
  -- hint: get to know the QuickCheck function vectorOf
  
 -- * C3
-
+--Property for testing if a Sudoku is a valid Sudoku
 prop_Sudoku :: Sudoku -> Bool
 prop_Sudoku sud = isSudoku sud
   -- hint: this definition is simple!
@@ -212,6 +212,7 @@ type Block = [Cell] -- a Row is also a [Cell]
 
 
 -- * D1
+--A method to test if a block is following all the block-rules
 isOkayBlock :: Block -> Bool
 isOkayBlock []     = True
 isOkayBlock (c:cs) 
@@ -223,7 +224,7 @@ isOkayBlock (c:cs)
 blocks :: Sudoku -> [Block]
 blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
       where
-        collumnsFromRows ms        =   transpose ms
+        collumnsFromRows ms        =  transpose ms
 
         blocksFromRows ls          =  firstBlocks ls ++ secondBlocks ls ++ thirdBlocks ls
 
@@ -243,40 +244,13 @@ blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
         getThirdOfTripple r        =   drop 6 r
             
 
---blocks :: Sudoku -> [Block]
---blocks (Sudoku rs)= rs ++ collumnsFromRows rs ++ blocksFromRows rs
---      where
---        collumnsFromRows ms   = transpose ms
-
---        blocksFromRows ls     = makeBlockRows $ makeAllTripples ls
-
---        makeBlockRows ks      = makeBlockRow (take 3 ks) ++ makeBlockRow (take 3 (drop 3 ks)) ++ makeBlockRow (drop 6 ks)
---        makeBlockRow rs1      = [takeFirst rs1, takeSecond rs1, takeThird rs1]
-        
---        takeFirst :: [[Cell]] -> [Cell]
---        takeFirst []          = []
---        takeFirst (x:xs)      = take 1 x ++ takeFirst xs
-        
---        takeSecond []         = []
---        takeSecond (x:xs)     = take 1 (drop 1 x) : takeSecond xs
-        
---        takeThird []          = []
---        takeThird (x:xs)      = drop 2 x : takeThird xs
-
---        makeAllTripples []    = []
---        makeAllTripples (x:xs)= [take 1 k, take 1 (drop 1 k), drop 2 k] : makeAllTripples xs
---            where 
---                  k = makeTripplesFromRow x
-
---        makeTripplesFromRow :: Row -> [[Cell]]
---        makeTripplesFromRow r =  [take 3 r, take 3 (drop 3 r), drop 6 r]
-      
-
+--Property to test the lengths of the blocks in a Sudoku
 prop_blocks_lengths :: Sudoku -> Bool
 prop_blocks_lengths sud = length([length c == 9 | c <- blocks sud]) == 27
 
 -- * D3
 
+--A method to test if each block in a Sudoku is okay
 isOkay :: Sudoku -> Bool
 isOkay sud              = isOkay' (blocks sud)
     where
