@@ -233,8 +233,8 @@ blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
         secondBlocks []            = []
         secondBlocks (r1:r2:r3:rs) =   (getSecondOfTripple r1 ++ getSecondOfTripple r2 ++ getSecondOfTripple r3) : secondBlocks rs
         
-        thirdBlocks []            = []
-        thirdBlocks (r1:r2:r3:rs) =   (getThirdOfTripple r1 ++ getThirdOfTripple r2 ++ getThirdOfTripple r3) : thirdBlocks rs
+        thirdBlocks []             = []
+        thirdBlocks (r1:r2:r3:rs)  =   (getThirdOfTripple r1 ++ getThirdOfTripple r2 ++ getThirdOfTripple r3) : thirdBlocks rs
         
         getFirstOfTripple r        =   take 3 r
 
