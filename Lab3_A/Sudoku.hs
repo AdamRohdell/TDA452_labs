@@ -62,7 +62,7 @@ example3   =
         , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
         , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
         , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
-        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,j 2]
         ]
   where
     n = Nothing
@@ -220,34 +220,56 @@ isOkayBlock (c:cs)
 
 
 -- * D2
-
 blocks :: Sudoku -> [Block]
-blocks (Sudoku rs)= rs ++ collumnsFromRows rs ++ blocksFromRows rs
+blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
       where
-        collumnsFromRows ms   = transpose ms
+        collumnsFromRows ms        =   transpose ms
 
-        blocksFromRows ls     = makeBlockRows $ makeAllTripples ls
+        blocksFromRows ls          =  firstBlocks ls ++ secondBlocks ls ++ thirdBlocks ls
 
-        makeBlockRows ks      = makeBlockRow (take 3 ks) ++ makeBlockRow (take 3 (drop 3 ks)) ++ makeBlockRow (drop 6 ks)
-        makeBlockRow rs1      = [takeFirst rs1, takeSecond rs1, takeThird rs1]
+        firstBlocks []             = []
+        firstBlocks  (r1:r2:r3:rs) = (getFirstOfTripple r1 ++ getFirstOfTripple r2 ++ getFirstOfTripple r3) : firstBlocks rs
         
-        takeFirst :: [[Cell]] -> [Cell]
-        takeFirst []          = []
-        takeFirst (x:xs)      = take 1 x ++ takeFirst xs
+        secondBlocks []            = []
+        secondBlocks (r1:r2:r3:rs) =   (getSecondOfTripple r1 ++ getSecondOfTripple r2 ++ getSecondOfTripple r3) : secondBlocks rs
         
-        takeSecond []         = []
-        takeSecond (x:xs)     = take 1 (drop 1 x) : takeSecond xs
+        thirdBlocks []            = []
+        thirdBlocks (r1:r2:r3:rs) =   (getThirdOfTripple r1 ++ getThirdOfTripple r2 ++ getThirdOfTripple r3) : thirdBlocks rs
         
-        takeThird []          = []
-        takeThird (x:xs)      = drop 2 x : takeThird xs
+        getFirstOfTripple r        =   take 3 r
 
-        makeAllTripples []    = []
-        makeAllTripples (x:xs)= [take 1 k, take 1 (drop 1 k), drop 2 k] : makeAllTripples xs
-            where 
-                  k = makeTripplesFromRow x
+        getSecondOfTripple r       =   take 3 (drop 3 r)
 
-        makeTripplesFromRow :: Row -> [[Cell]]
-        makeTripplesFromRow r =  [take 3 r, take 3 (drop 3 r), drop 6 r]
+        getThirdOfTripple r        =   drop 6 r
+            
+
+--blocks :: Sudoku -> [Block]
+--blocks (Sudoku rs)= rs ++ collumnsFromRows rs ++ blocksFromRows rs
+--      where
+--        collumnsFromRows ms   = transpose ms
+
+--        blocksFromRows ls     = makeBlockRows $ makeAllTripples ls
+
+--        makeBlockRows ks      = makeBlockRow (take 3 ks) ++ makeBlockRow (take 3 (drop 3 ks)) ++ makeBlockRow (drop 6 ks)
+--        makeBlockRow rs1      = [takeFirst rs1, takeSecond rs1, takeThird rs1]
+        
+--        takeFirst :: [[Cell]] -> [Cell]
+--        takeFirst []          = []
+--        takeFirst (x:xs)      = take 1 x ++ takeFirst xs
+        
+--        takeSecond []         = []
+--        takeSecond (x:xs)     = take 1 (drop 1 x) : takeSecond xs
+        
+--        takeThird []          = []
+--        takeThird (x:xs)      = drop 2 x : takeThird xs
+
+--        makeAllTripples []    = []
+--        makeAllTripples (x:xs)= [take 1 k, take 1 (drop 1 k), drop 2 k] : makeAllTripples xs
+--            where 
+--                  k = makeTripplesFromRow x
+
+--        makeTripplesFromRow :: Row -> [[Cell]]
+--        makeTripplesFromRow r =  [take 3 r, take 3 (drop 3 r), drop 6 r]
       
 
 prop_blocks_lengths :: Sudoku -> Bool
