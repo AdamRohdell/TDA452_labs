@@ -97,7 +97,7 @@ prop_size_onTopOf h1 h2 = size h1 + size h2 == size (h1<+h2)
 
 --Turns a list of Cards into a Hand
 addCardListToHand :: [Card] -> Hand
-addCardListToHand Empty  = cs
+addCardListToHand []  = Empty
 addCardListToHand (c:cs) = Add c (addCardListToHand cs)
 
 
@@ -143,10 +143,10 @@ shuffleDeck g h     = shuffleDeck' g h Empty
 
 -- A function that removes then N:th card of a Hand, counted from the top.
 removeNth :: Integer -> Hand -> (Card, Hand)
-removeNth  _ Empty     = error "Hand is empty"
+removeNth  _ Empty     = error "Hand is empty or the number of cards is less than the number to be removed"
 removeNth  1 (Add c h) = (c , h)
 removeNth  n (Add c h) = (c', Add c h')
-        where (c', h') = removeNth (n - 1) h  
+        where (c', h') = removeNth (n - 1) h
 
 --A property that checks if a shuffled hand still contains the same cards
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
