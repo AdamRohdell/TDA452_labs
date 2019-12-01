@@ -243,35 +243,6 @@ blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
         getThirdOfTripple r        =   drop 6 r
             
 
---blocks :: Sudoku -> [Block]
---blocks (Sudoku rs)= rs ++ collumnsFromRows rs ++ blocksFromRows rs
---      where
---        collumnsFromRows ms   = transpose ms
-
---        blocksFromRows ls     = makeBlockRows $ makeAllTripples ls
-
---        makeBlockRows ks      = makeBlockRow (take 3 ks) ++ makeBlockRow (take 3 (drop 3 ks)) ++ makeBlockRow (drop 6 ks)
---        makeBlockRow rs1      = [takeFirst rs1, takeSecond rs1, takeThird rs1]
-        
---        takeFirst :: [[Cell]] -> [Cell]
---        takeFirst []          = []
---        takeFirst (x:xs)      = take 1 x ++ takeFirst xs
-        
---        takeSecond []         = []
---        takeSecond (x:xs)     = take 1 (drop 1 x) : takeSecond xs
-        
---        takeThird []          = []
---        takeThird (x:xs)      = drop 2 x : takeThird xs
-
---        makeAllTripples []    = []
---        makeAllTripples (x:xs)= [take 1 k, take 1 (drop 1 k), drop 2 k] : makeAllTripples xs
---            where 
---                  k = makeTripplesFromRow x
-
---        makeTripplesFromRow :: Row -> [[Cell]]
---        makeTripplesFromRow r =  [take 3 r, take 3 (drop 3 r), drop 6 r]
-      
-
 prop_blocks_lengths :: Sudoku -> Bool
 prop_blocks_lengths sud = length([length c == 9 | c <- blocks sud]) == 27
 
@@ -296,16 +267,33 @@ type Pos = (Int,Int)
 -- * E1
 
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks (Sudoku rs) = blanks' rs 0 
+    where
+      blanks' :: [Row] -> Int -> [Pos]
+      blanks' (r:rs) x     
+                  | x == 8    = checkIfRowBlanks r x 0
+                  | otherwise = checkIfRowBlanks r x 0 ++ blanks' rs (x+1)   
+      
+      checkIfRowBlanks (c:cs) x y 
+                            | y == 8  && c == Nothing = (x,y) : []
+                            | y == 8                  = []
+                            | c == Nothing            = (x,y) : checkIfRowBlanks cs x (y+1)
+                            | otherwise               = checkIfRowBlanks cs x (y+1)
+      
+      
+      
+prop_blanks_allBlanks :: Sudoku -> Bool
+prop_blanks_allBlanks sud = length (filter (\val -> val == Nothing) (rows sud)) == length (blanks sud)
 
---prop_blanks_allBlanks :: ...
---prop_blanks_allBlanks =
+--Vänta med denna propertyn tills vi har skrivit lite mer kod på nästa uppgift
+
+  
 
 
 -- * E2
 
-(!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = undefined
+--(!!=) :: [a] -> (Int,a) -> [a]
+--xs !!= (i,y) = undefined
 
 --prop_bangBangEquals_correct :: ...
 --prop_bangBangEquals_correct =
