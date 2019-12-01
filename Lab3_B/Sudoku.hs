@@ -283,7 +283,7 @@ blanks (Sudoku rs) = blanks' rs 0
       
       
 prop_blanks_allBlanks :: Sudoku -> Bool
-prop_blanks_allBlanks sud = length (filter (\val -> val == Nothing) (rows sud)) == length (blanks sud)
+prop_blanks_allBlanks sud = undefined --length (filter (\val -> val == Nothing) (rows sud)) == length (blanks sud)
 
 --Vänta med denna propertyn tills vi har skrivit lite mer kod på nästa uppgift
 
@@ -292,8 +292,12 @@ prop_blanks_allBlanks sud = length (filter (\val -> val == Nothing) (rows sud)) 
 
 -- * E2
 
---(!!=) :: [a] -> (Int,a) -> [a]
---xs !!= (i,y) = undefined
+(!!=) :: [a] -> (Int,a) -> [a]
+xs !!= (i,y) = indexHelper xs (i,y) 0
+      where indexHelper (a:as) (j,v) n
+                              | n < j     = error "Index out of bounds"
+                              | n == j    = (v:as)
+                              | otherwise = (a:(indexHelper as (j,v) (n+1)))
 
 --prop_bangBangEquals_correct :: ...
 --prop_bangBangEquals_correct =
