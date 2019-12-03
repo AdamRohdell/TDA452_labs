@@ -68,6 +68,24 @@ example3   =
     n = Nothing
     j = Just    
 
+exampleNotSudoku :: Sudoku
+exampleNotSudoku   =
+        Sudoku
+            [ [j 3  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+            , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n ]
+            ]
+      where
+        n = Nothing
+        j = Just    
+    
+
 -- * A1
 
 -- | allBlankSudoku is a sudoku with just blanks
@@ -104,10 +122,12 @@ validRowsOfSudoku (r:rs) = and (validCellsOfRow r) : validRowsOfSudoku rs
 --isSudoku checks if a Sudoku is a valid sudoku according to standard sudoku-rules
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
+                    and ([length cs == 9 |cs <- rows sud]),
                     length[ length cs == 9 |cs <- rows sud] == 9,
-                      and $ validRowsOfSudoku (rows sud)]                  
+                    and $ validRowsOfSudoku (rows sud)]                  
 
 -- * A3
+--and ([length cs == 9 |cs <- rows sud]),
 
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
@@ -224,29 +244,30 @@ isOkayBlock (c:cs)
 blocks :: Sudoku -> [Block]
 blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
       where
-        collumnsFromRows ms        =  transpose ms
+        collumnsFromRows ms        = transpose ms
 
-        blocksFromRows ls          =  firstBlocks ls ++ secondBlocks ls ++ thirdBlocks ls
+        blocksFromRows ls          = firstBlocks ls ++ secondBlocks ls ++ thirdBlocks ls
 
         firstBlocks []             = []
         firstBlocks  (r1:r2:r3:rs) = (getFirstOfTripple r1 ++ getFirstOfTripple r2 ++ getFirstOfTripple r3) : firstBlocks rs
         
         secondBlocks []            = []
-        secondBlocks (r1:r2:r3:rs) =   (getSecondOfTripple r1 ++ getSecondOfTripple r2 ++ getSecondOfTripple r3) : secondBlocks rs
-        
+        secondBlocks (r1:r2:r3:rs) = (getSecondOfTripple r1 ++ getSecondOfTripple r2 ++ getSecondOfTripple r3) : secondBlocks rs
+      
         thirdBlocks []             = []
-        thirdBlocks (r1:r2:r3:rs)  =   (getThirdOfTripple r1 ++ getThirdOfTripple r2 ++ getThirdOfTripple r3) : thirdBlocks rs
+        thirdBlocks (r1:r2:r3:rs)  = (getThirdOfTripple r1 ++ getThirdOfTripple r2 ++ getThirdOfTripple r3) : thirdBlocks rs
         
-        getFirstOfTripple r        =   take 3 r
+        getFirstOfTripple r        = take 3 r
 
-        getSecondOfTripple r       =   take 3 (drop 3 r)
+        getSecondOfTripple r       = take 3 (drop 3 r)
 
-        getThirdOfTripple r        =   drop 6 r
+        getThirdOfTripple r        = drop 6 r
             
 
 --Property to test the lengths of the blocks in a Sudoku
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths sud = length([length c == 9 | c <- blocks sud]) == 27
+prop_blocks_lengths sud = length([c | c <- blocks sud]) == 27 && 
+                          and ([length c == 9 | c <- blocks sud])
 
 -- * D3
 
