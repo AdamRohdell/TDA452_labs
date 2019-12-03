@@ -287,20 +287,36 @@ prop_blanks_allBlanks sud = undefined --length (filter (\val -> val == Nothing) 
 
 --Vänta med denna propertyn tills vi har skrivit lite mer kod på nästa uppgift
 
-  
-
 
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = indexHelper xs (i,y) 0
+[] !!= (i,y)            = []
+xs !!= (i,y) 
+        | i < 0         = error "Negative index"
+        | i < length xs = indexHelper xs (i,y) 0
+        | otherwise     = error "Index out of bounds"
       where indexHelper (a:as) (j,v) n
-                              | n < j     = error "Index out of bounds"
                               | n == j    = (v:as)
                               | otherwise = (a:(indexHelper as (j,v) (n+1)))
 
---prop_bangBangEquals_correct :: ...
---prop_bangBangEquals_correct =
+prop_bangBangEquals_correct :: [Cell] -> (Int, Cell) -> Bool
+prop_bangBangEquals_correct [] (i,y) = [] !!= (abs i,y) == []
+prop_bangBangEquals_correct xs (i,y) =
+                    length newList == length xs &&
+                    last (take (j+1) newList) == y
+
+                    where 
+                      j 
+                       | abs i > (length xs -1) = (abs i) `mod` (length xs)
+                       | otherwise         = abs i 
+                      newList = xs !!= (j,y)
+                    
+                      
+                      
+      -- Längden ska vara samma innan som efter
+      -- Rätt element ska vara utbytt
+      
 
 
 -- * E3
