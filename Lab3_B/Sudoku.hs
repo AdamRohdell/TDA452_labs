@@ -3,6 +3,7 @@ module Sudoku where
 import Test.QuickCheck
 import Data.Char
 import Data.List
+import Data.Maybe
 
 ------------------------------------------------------------------------------
 
@@ -102,8 +103,9 @@ validRowsOfSudoku (r:rs) = and (validCellsOfRow r) : validRowsOfSudoku rs
 
 isSudoku :: Sudoku -> Bool
 isSudoku sud = and [not(rows sud == []), 
+                    and ([length cs == 9 |cs <- rows sud]),
                     length[ length cs == 9 |cs <- rows sud] == 9,
-                      and $ validRowsOfSudoku (rows sud)]                  
+                    and $ validRowsOfSudoku (rows sud)]                  
 
 -- * A3
 
@@ -244,8 +246,8 @@ blocks(Sudoku rs) = rs ++ collumnsFromRows rs ++ blocksFromRows rs
             
 
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths sud = length([length c == 9 | c <- blocks sud]) == 27
-
+prop_blocks_lengths sud = length([c | c <- blocks sud]) == 27 && 
+                          and ([length c == 9 | c <- blocks sud])
 -- * D3
 
 isOkay :: Sudoku -> Bool
@@ -305,38 +307,77 @@ prop_bangBangEquals_correct [] (i,y) = [] !!= (abs i,y) == []
 prop_bangBangEquals_correct xs (i,y) =
                     length newList == length xs &&
                     last (take (j+1) newList) == y
-
-                    where 
-                      j 
-                       | abs i > (length xs -1) = (abs i) `mod` (length xs)
-                       | otherwise         = abs i 
-                      newList = xs !!= (j,y)
-                    
-                      
-                      
-      -- Längden ska vara samma innan som efter
-      -- Rätt element ska vara utbytt
+                      where 
+                        j 
+                          | abs i > (length xs -1) = (abs i) `mod` (length xs)
+                          | otherwise         = abs i 
+                        newList = xs !!= (j,y)
       
 
 
 -- * E3
 
 update :: Sudoku -> Pos -> Cell -> Sudoku
-update = undefined
+update (Sudoku rs) (x,y) c 
+          | x > 8 || x < 0 = error "Index out of bounds"
+          | otherwise      = Sudoku (update' rs 0)
+              where 
+                update' (r:rs) i 
+                        | x == i    = (r !!= (y, c):rs)
+                        | otherwise =  (r:update' rs (i+1))
 
---prop_update_updated :: ...
---prop_update_updated =
+
+
+                  
+
+prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
+prop_update_updated sud (x,y) c = cellAtIndex == c
+          where
+            rs          = rows (update sud (x',y') c)
+            rowAtIndex  = last (take (x'+1) rs)
+            cellAtIndex = last (take (y'+1) rowAtIndex)
+            x' 
+              | abs x < length (rows sud) = abs x
+              | otherwise                 = (abs x) `mod` length (rows sud)
+            y'
+              | abs y < length (rows sud) = abs y
+              | otherwise                 = (abs y) `mod` length (rows sud)
 
 
 ------------------------------------------------------------------------------
 
 -- * F1
+solve :: Sudoku -> Maybe Sudoku
+solve sud
+    | solve' (sud:[]) == [] = Nothing
+    | otherwise                     = Just $ head (solve' (sud:[]))
+            where 
+              solve' :: [Sudoku] -> [Sudoku]
+              solve' []   = []
+              solve' (s:suds)
+                      | isFilled s = s:[]
+                      | not (isSudoku s) || not (isOkay s) = []
+                      | otherwise = solve' (solve'' s (blanks s))
+
+              solve'' :: Sudoku -> [Pos] -> [Sudoku]
+              solve'' sud' []        = []
+              solve'' sud' (p':pos') = update' sud' p' ([Just c | c <- [1..9]]) ++ solve'' sud' pos'
+
+              update' :: Sudoku -> Pos -> [Cell] -> [Sudoku]
+              update' sud p []     = []
+              update' sud p (c:cs) 
+                          | isOkay (update sud p c) = update sud p c : update' sud p cs
+                          | otherwise               = update' sud p cs
 
 
 -- * F2
-
+readAndSolve :: FilePath -> IO ()
+readAndSolve fp = undefined
 
 -- * F3
-
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf = undefined
 
 -- * F4
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound = undefined
