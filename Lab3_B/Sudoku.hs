@@ -69,6 +69,24 @@ example3   =
     n = Nothing
     j = Just    
 
+example4 :: Sudoku
+example4   =
+    Sudoku
+        [ [j 3  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ,n  ]
+        , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,j 2]
+        ]
+  where
+    n = Nothing
+    j = Just    
+
+
 -- * A1
 
 -- | allBlankSudoku is a sudoku with just blanks
@@ -267,7 +285,7 @@ isOkay sud              = isOkay' (blocks sud)
 type Pos = (Int,Int)
 
 -- * E1
-
+------
 blanks :: Sudoku -> [Pos]
 blanks (Sudoku rs) = blanks' rs 0 
     where
@@ -285,9 +303,16 @@ blanks (Sudoku rs) = blanks' rs 0
       
       
 prop_blanks_allBlanks :: Sudoku -> Bool
-prop_blanks_allBlanks sud = undefined --length (filter (\val -> val == Nothing) (rows sud)) == length (blanks sud)
+prop_blanks_allBlanks sud 
+        | isSudoku sud = sud == updateWithBlanks sud blankPos
+        | otherwise = False
 
---Vänta med denna propertyn tills vi har skrivit lite mer kod på nästa uppgift
+          where 
+              blankPos = blanks sud
+              updateWithBlanks sud []      = sud
+              updateWithBlanks sud (p:pos) = updateWithBlanks (update sud p Nothing) pos
+          
+
 
 
 -- * E2
