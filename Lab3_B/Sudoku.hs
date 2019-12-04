@@ -349,35 +349,36 @@ prop_update_updated sud (x,y) c = cellAtIndex == c
 -- * F1
 solve :: Sudoku -> Maybe Sudoku
 solve sud
-    | solve' (sud:[]) == [] = Nothing
-    | otherwise                     = Just $ head (solve' (sud:[]))
-            where 
-              solve' :: [Sudoku] -> [Sudoku]
-              solve' []   = []
-              solve' (s:suds)
-                      | isFilled s = s:[]
-                      | not (isSudoku s) || not (isOkay s) = []
-                      | otherwise = solve' (solve'' s (blanks s))
+          | null (solve' sud) = Nothing
+          | otherwise         = Just $ head (solve' sud)
+              where 
+                solve' s 
+                        | not (isSudoku s) || not (isOkay s) = []
+                        | isFilled s = [s]
+                        | otherwise = solve'' s (blanks s)
+                solve'' sud' (p':ps) = concat $ map solve' [update sud' p' (Just c) | c <- [1..9]]
 
-              solve'' :: Sudoku -> [Pos] -> [Sudoku]
-              solve'' sud' []        = []
-              solve'' sud' (p':pos') = update' sud' p' ([Just c | c <- [1..9]]) ++ solve'' sud' pos'
-
-              update' :: Sudoku -> Pos -> [Cell] -> [Sudoku]
-              update' sud p []     = []
-              update' sud p (c:cs) 
-                          | isOkay (update sud p c) = update sud p c : update' sud p cs
-                          | otherwise               = update' sud p cs
 
 
 -- * F2
 readAndSolve :: FilePath -> IO ()
-readAndSolve fp = undefined
-
+readAndSolve fp =do
+       sud <- readSudoku fp
+       printSudoku(fromJust(solve sud))
 -- * F3
 isSolutionOf :: Sudoku -> Sudoku -> Bool
-isSolutionOf = undefined
+sud1 `isSolutionOf` sud2 
+        | not(isFilled sud1 && isOkay sud1) = False
+        | otherwise                         = checkZips zips
 
+
+          where
+            zips = zip (concat $ rows sud1) (concat $ rows sud2)
+            checkZips []                 = True
+            checkZips ((x,y):xys)
+                | y == Nothing || x == y = True && checkZips xys
+                | otherwise              = False
+          
 -- * F4
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound = undefined
