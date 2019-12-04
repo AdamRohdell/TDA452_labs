@@ -304,15 +304,8 @@ blanks (Sudoku rs) = blanks' rs 0
       
 prop_blanks_allBlanks :: Sudoku -> Bool
 prop_blanks_allBlanks sud 
-        | isSudoku sud = sud == updateWithBlanks sud blankPos
+        | isSudoku sud = and $ map (\v -> v == Nothing) [((rows sud) !! x) !! y | (x,y) <- blanks sud]
         | otherwise = False
-
-          where 
-              blankPos = blanks sud
-              updateWithBlanks sud []      = sud
-              updateWithBlanks sud (p:pos) = updateWithBlanks (update sud p Nothing) pos
-          
-
 
 
 -- * E2
