@@ -381,4 +381,7 @@ sud1 `isSolutionOf` sud2
           
 -- * F4
 prop_SolveSound :: Sudoku -> Property
-prop_SolveSound = undefined
+prop_SolveSound sud = isOkay sud ==> fromJust (solve sud) `isSolutionOf` sud
+
+fewerChecks prop =
+  quickCheckWith stdArgs{maxSuccess=30} prop
