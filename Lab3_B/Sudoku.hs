@@ -301,11 +301,12 @@ blanks (Sudoku rs) = blanks' rs 0
                             | otherwise               = checkIfRowBlanks cs x (y+1)
       
       
-      
+    
 prop_blanks_allBlanks :: Sudoku -> Bool
 prop_blanks_allBlanks sud 
         | isSudoku sud = and $ map (\v -> v == Nothing) [((rows sud) !! x) !! y | (x,y) <- blanks sud]
         | otherwise = False
+
 
 
 -- * E2
