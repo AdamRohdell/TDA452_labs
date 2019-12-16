@@ -48,7 +48,7 @@ readAndDraw input canvas =
      -- It should be replaced with code that draws the graph of the function.
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
-     path "blue" [(10,10),(canWidth-10,canHeight/2)] canvas
+     path "blue" (points (fromJust (readExpr formula)) 0.04 (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
 
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
