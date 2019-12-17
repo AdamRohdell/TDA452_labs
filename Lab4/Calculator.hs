@@ -22,12 +22,13 @@ setup window =
      fx      <- mkHTML "<i>f</i>(<i>x</i>)="  -- The text "f(x)="
      input   <- mkInput 20 "x"                -- The formula input
      draw    <- mkButton "Draw graph"         -- The draw button
+     zoom    <- mkSlider (0, 10) 5            -- The zoom slider
        -- The markup "<i>...</i>" means that the text inside should be rendered
        -- in italics.
 
      -- Add the user interface elements to the page, creating a specific layout
      formula <- row [pure fx,pure input]
-     getBody window #+ [column [pure canvas,pure formula,pure draw]]
+     getBody window #+ [column [pure canvas,pure formula,pure draw, pure zoom]]
 
      -- Styling
      getBody window # set style [("backgroundColor","lightblue"),
@@ -37,6 +38,7 @@ setup window =
      -- Interaction (install event handlers)
      on UI.click     draw  $ \ _ -> readAndDraw input canvas
      on valueChange' input $ \ _ -> readAndDraw input canvas
+   --  on valueChange' zoom  $ \ _ -> 
 
 
 readAndDraw :: Element -> Canvas -> UI ()
@@ -53,7 +55,7 @@ readAndDraw input canvas =
 
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points exp scale (width,height) = [(d,realToPix (eval' d))| d <- [0,scale..(fromIntegral width)]]
+points exp scale (width,height) = [(d, realToPix (eval' d))| d <- [0,scale..(fromIntegral width)]]
       where 
           eval'     = eval exp'
           exp'      = simplify exp
@@ -65,7 +67,7 @@ pixToReal x = x+(canWidth/2)
 
   -- converts a real y-coordinate to a pixel y-coordinate
 realToPix :: Double -> Double
-realToPix y = (y-(canHeight/2))*(-1)
+realToPix y = canHeight-y
 
 
 
