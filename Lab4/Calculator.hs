@@ -22,12 +22,13 @@ setup window =
      fx      <- mkHTML "<i>f</i>(<i>x</i>)="  -- The text "f(x)="
      input   <- mkInput 20 "x"                -- The formula input
      draw    <- mkButton "Draw graph"         -- The draw button
-     zoom    <- mkSlider (1, 100) 10            -- The zoom slider
+     zoom    <- mkSlider (1, 100) 10          -- The zoom slider
+     diff    <- mkButton "Differentiate"      -- The differentiate button
        -- The markup "<i>...</i>" means that the text inside should be rendered
        -- in italics.
 
      -- Add the user interface elements to the page, creating a specific layout
-     formula <- row [pure fx,pure input]
+     formula <- row [pure fx,pure input, pure diff]
      getBody window #+ [column [pure canvas,pure formula,pure draw, pure zoom]]
 
      -- Styling
@@ -36,17 +37,23 @@ setup window =
      pure input # set style [("fontSize","14pt")]
 
      -- Interaction (install event handlers)
-     on UI.click     draw  $ \ _ -> readAndDraw input canvas zoom
-     on valueChange' input $ \ _ -> readAndDraw input canvas zoom
-     on valueChange' zoom  $ \ _ -> readAndDraw input canvas zoom
+     on UI.click     draw  $ \ _ -> readAndDraw input canvas zoom False
+     on UI.click     diff  $ \ _ -> readAndDraw input canvas zoom True
+     on valueChange' input $ \ _ -> readAndDraw input canvas zoom False
+     on valueChange' zoom  $ \ _ -> readAndDraw input canvas zoom False
 
 
-readAndDraw :: Element -> Canvas -> Element -> UI ()
-readAndDraw input canvas zoom =
+readAndDraw :: Element -> Canvas -> Element -> Bool ->UI ()
+readAndDraw input canvas zoom d =
   do -- Get the current formula (a String) from the input element
      formula <- get value input
+     
+     let formula'
+            | d         = differentiate $ fromJust (readExpr formula)
+            | otherwise = fromJust $ readExpr formula
      -- Clear the canvas
      clearCanvas canvas
+     set value input (showExpr formula') 
      -- The following code draws the formula text in the canvas and a blue line.
      -- It should be replaced with code that draws the graph of the function.
      scale <- get value zoom
@@ -54,7 +61,7 @@ readAndDraw input canvas zoom =
 
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
-     path "blue" (points (fromJust (readExpr formula)) scale' (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
+     path "blue" (points formula' scale' (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
 
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
