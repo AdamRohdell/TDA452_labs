@@ -4,6 +4,7 @@
 
 import ThreepennyPages
 import Expr
+import Data.Maybe
 import Graphics.UI.Threepenny.Core as UI
 import qualified Graphics.UI.Threepenny as UI
 
@@ -52,15 +53,19 @@ readAndDraw input canvas =
 
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points exp scale (width,height)
-
+points exp scale (width,height) = [(d,realToPix (eval' d))| d <- [0,scale..(fromIntegral width)]]
       where 
-          eval' x   = eval exp' x
+          eval'     = eval exp'
           exp'      = simplify exp
 
 
+  -- converts a pixel x-coordinate to a real x-coordinate
+pixToReal :: Double -> Double
+pixToReal x = x+(canWidth/2)
 
-
+  -- converts a real y-coordinate to a pixel y-coordinate
+realToPix :: Double -> Double
+realToPix y = (y-(canHeight/2))*(-1)
 
 
 
