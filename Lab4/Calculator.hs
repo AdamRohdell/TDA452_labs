@@ -53,14 +53,14 @@ readAndDraw input canvas zoom d =
             | otherwise = fromJust $ readExpr formula
      -- Clear the canvas
      clearCanvas canvas
-     set value input (showExpr formula') 
+     set value (showExpr formula') (widget input)
      -- The following code draws the formula text in the canvas and a blue line.
      -- It should be replaced with code that draws the graph of the function.
      scale <- get value zoom
      let scale' = read scale
 
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
-     UI.fillText formula (10,canHeight/2) canvas
+     UI.fillText (showExpr formula') (10,canHeight/2) canvas
      path "blue" (points formula' scale' (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
 
 
