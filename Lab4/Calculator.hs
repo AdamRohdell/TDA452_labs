@@ -22,7 +22,7 @@ setup window =
      fx      <- mkHTML "<i>f</i>(<i>x</i>)="  -- The text "f(x)="
      input   <- mkInput 20 "x"                -- The formula input
      draw    <- mkButton "Draw graph"         -- The draw button
-     zoom    <- mkSlider (0, 10) 5            -- The zoom slider
+     zoom    <- mkSlider (1, 100) 10            -- The zoom slider
        -- The markup "<i>...</i>" means that the text inside should be rendered
        -- in italics.
 
@@ -36,38 +36,42 @@ setup window =
      pure input # set style [("fontSize","14pt")]
 
      -- Interaction (install event handlers)
-     on UI.click     draw  $ \ _ -> readAndDraw input canvas
-     on valueChange' input $ \ _ -> readAndDraw input canvas
-   --  on valueChange' zoom  $ \ _ -> 
+     on UI.click     draw  $ \ _ -> readAndDraw input canvas zoom
+     on valueChange' input $ \ _ -> readAndDraw input canvas zoom
+     on valueChange' zoom  $ \ _ -> readAndDraw input canvas zoom
 
 
-readAndDraw :: Element -> Canvas -> UI ()
-readAndDraw input canvas =
+readAndDraw :: Element -> Canvas -> Element -> UI ()
+readAndDraw input canvas zoom =
   do -- Get the current formula (a String) from the input element
      formula <- get value input
      -- Clear the canvas
      clearCanvas canvas
      -- The following code draws the formula text in the canvas and a blue line.
      -- It should be replaced with code that draws the graph of the function.
+     scale <- get value zoom
+     let scale' = read scale
+
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
-     path "blue" (points (fromJust (readExpr formula)) 0.04 (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
+     path "blue" (points (fromJust (readExpr formula)) scale' (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
 
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points exp scale (width,height) = [(d, realToPix (eval' d))| d <- [0,scale..(fromIntegral width)]]
+points exp scale (width,height) = [(fromIntegral d, realToPix (eval' (inVal d) *scale))| d <- [0..width]]
       where 
           eval'     = eval exp'
           exp'      = simplify exp
+          inVal x' = pixToReal (fromIntegral x') / scale
 
 
   -- converts a pixel x-coordinate to a real x-coordinate
 pixToReal :: Double -> Double
-pixToReal x = x+(canWidth/2)
+pixToReal x = x-(canWidth/2)
 
   -- converts a real y-coordinate to a pixel y-coordinate
 realToPix :: Double -> Double
-realToPix y = canHeight-y
+realToPix y = canHeight/2-y
 
 
 
