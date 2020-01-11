@@ -8,13 +8,26 @@ import System.Random
 import Test.QuickCheck
 import Data.String
 
+data Operator = Add|Mul
+        deriving (Eq)
+instance Show Operator where
+        show Add = "+"
+        show Mul = "*" 
+
+type FunctionName = String
+        
+
 data Expr = Num Double
           | Var Char
-          | Add Expr Expr
-          | Mul Expr Expr
-          | Sin Expr
-          | Cos Expr
+          | Operation Operator Expr Expr
+          | Function FunctionName Expr
+--          | Add Expr Expr
+--          | Mul Expr Expr
+--          | Sin Expr
+--          | Cos Expr
           deriving (Eq, Show)
+
+
 
 instance Arbitrary Expr where
     arbitrary = sized arbExpr
@@ -32,39 +45,46 @@ num :: Double -> Expr
 num = Num
 
 add,mul :: Expr -> Expr -> Expr
-add = Add 
-mul = Mul
+add = Operation Add 
+mul = Operation Mul
 
 sin,cos :: Expr -> Expr
-sin = Sin
-cos = Cos 
+sin = Function "Sin"
+cos = Function "Cos"
 
 
 
 showExpr :: Expr -> String
 showExpr (Num d)     = show d
 showExpr (Var s)     = s:""
-showExpr (Add e1 e2) = showExpr e1 ++ "+" ++ showExpr e2
-showExpr (Mul e1 e2) = showExpr e1 ++ "*" ++ showExpr e2
-showExpr (Sin e)     = "sin" ++ showExpr e
-showExpr (Cos e)     = "cos" ++ showExpr e
+showExpr (Operation op e1 e2) = showExpr e1 ++ show op ++ showExpr e2
+showExpr (Function f e)     = showFun (Function f e) ++ showExpr e
+
+showFun :: Expr -> String
+showFun (Function "Cos" e) = "Cos "
+showFun (Function "Sin" e) = "Sin "
 
 
+evalOp :: Operator -> (Double -> Double -> Double)
+evalOp Add = (+)
+evalOp Mul = (*)
+
+evalFun :: String -> (Double -> Double)
+evalFun "Sin" = sin'
+evalFun "Cos" = cos'
 
 eval :: Expr -> Double -> Double
-eval (Num d) c     = d
-eval (Var s) d     = d
-eval (Add e1 e2) d = eval e1 d + eval e2 d
-eval (Mul e1 e2) d = eval e1 d * eval e2 d
-eval (Sin e) d     = sin' (eval e d)
-eval (Cos e) d     = cos' (eval e d)
+eval (Num d) c              = d
+eval (Var s) d              = d
+eval (Operation op e1 e2) d = evalOp op (eval e1 d) (eval e2 d)
+eval (Function f e) d       = evalFun f (eval e d)
 
 
 expr, term, factor :: Parser Expr
-expr = foldl1 Add <$> chain term (char '+')
-term = foldl1 Mul <$> chain factor (char '*')
+expr = foldl1 (Operation Add) <$> chain term (char '+')
+term = foldl1 (Operation Mul) <$> chain factor (char '*')
 factor = Num <$> number <|> do char '(' *> expr <* char ')' 
-                <|> Sin <$> sinus <|> Cos <$> cosinus <|> Var <$> char 'x'
+                <|> Function "Sin" <$> mathFunc "Sin" <|> Function "Cos" <$> mathFunc "Cos" <|> Var <$> char 'x'
 
 
 
@@ -77,22 +97,16 @@ addition = operation '+' (+)
 multiplication :: Parser Double
 multiplication = operation '*' (*)
 
-sinus :: Parser Expr
-sinus = do
-        mapM_ char "sin"
-        n <- expr
-        return n
-
-cosinus :: Parser Expr
-cosinus = do
-        mapM_ char "cos"
-        n <- expr
-        return n
+mathFunc :: FunctionName -> Parser Expr
+mathFunc f = do 
+             mapM_ char f
+             n <- expr
+             return n
 
 operation :: Char -> (Double -> Double -> b) -> Parser b
 operation c op = do
         n <- number
-        char c 
+        char c  
         m <- number
         return (m `op` n)
         
@@ -114,50 +128,47 @@ prop_ShowReadExpr e1
 
 
 arbExpr :: Int -> Gen Expr
-arbExpr n = arbExpr'
+arbExpr 0 = arbNum
+arbExpr n = frequency [(5, arbFun (arbExpr (n-1))), (4, do
+                                                    m <- choose (0, n-1)
+                                                    arbBin (arbExpr m) (arbExpr (n-1-m))),
+                        (1, return (Var 'x'))]
 
-arbExpr' :: Gen Expr
-arbExpr' = frequency [(6, arbitrary), (2, arbBin), (1, arbFun), (1, return (Var 'x'))]
+arbFun :: Gen Expr -> Gen Expr
+arbFun e = do e1 <- e
+              elements [Function "Sin" e1, Function "Cos" e1]
 
-arbFun :: Gen Expr 
-arbFun = do
-        f <- elements [Sin, Cos]
-        e <- arbExpr'
-        return $ f e
-
-arbBin :: Gen Expr
-arbBin = do
-        n1 <- arbNum
-        n2 <- arbNum
-        frequency [(5, return (Mul n1 n2)), (5, return (Add n1 n2))]
+arbBin :: Gen Expr -> Gen Expr -> Gen Expr
+arbBin e1 e2 = do e1' <- e1
+                  e2' <- e2
+                  elements [Operation Add e1' e2', Operation Mul e1' e2']
 
 arbNum :: Gen Expr
 arbNum = Num <$> suchThat arbitrary (>0.1)
         
 simplify :: Expr -> Expr
-simplify (Mul (Num 0) _)         = Num 0
-simplify (Mul _ (Num 0))         = Num 0
+simplify (Operation Mul (Num 0) _)         = Num 0
+simplify (Operation Mul _ (Num 0))         = Num 0
 
-simplify (Add (Num n1) (Num n2)) = Num (n1+n2)
-simplify (Mul (Num n1) (Num n2)) = Num (n1*n2)
+simplify (Operation Add (Num n1) (Num n2)) = Num (n1+n2)
+simplify (Operation Mul (Num n1) (Num n2)) = Num (n1*n2)
 
-simplify (Sin e)                 = Sin (simplify e)
-simplify (Cos e)                 = Cos (simplify e)
+simplify (Function f e)                    = Function f (simplify e)
 
-simplify (Add e1 (Num 0))        = simplify e1
-simplify (Add (Num 0) e1)        = simplify e1
-simplify (Mul (Num 1) e1)        = simplify e1
-simplify (Mul e1 (Num 1))        = simplify e1
+simplify (Operation Add e1 (Num 0))        = simplify e1
+simplify (Operation Add (Num 0) e1)        = simplify e1
+simplify (Operation Mul (Num 1) e1)        = simplify e1
+simplify (Operation Mul e1 (Num 1))        = simplify e1
 
-simplify (Add e1 e2)
-        | e1 /= e1' && e2 /=e2' = simplify $ Add (simplify e1) (simplify e2)
-        | otherwise             = (Add (simplify e1) (simplify e2))
+simplify (Operation Add e1 e2)
+        | e1 /= e1' && e2 /=e2' = simplify $ Operation Add (simplify e1) (simplify e2)
+        | otherwise             = Operation Add (simplify e1) (simplify e2)
                 where   e1' = simplify e1
                         e2' = simplify e2
 
-simplify (Mul e1 e2)  
-        | e1 /= e1' && e2 /=e2' = simplify $ Mul (simplify e1) (simplify e2)
-        | otherwise             = Mul (simplify e1) (simplify e2)
+simplify (Operation Mul e1 e2)  
+        | e1 /= e1' && e2 /=e2' = simplify $ Operation Mul (simplify e1) (simplify e2)
+        | otherwise             = Operation Mul (simplify e1) (simplify e2)
                 where   e1' = simplify e1
                         e2' = simplify e2  
 simplify e                       = e
@@ -168,10 +179,10 @@ prop_simplify e d = eval e d == eval (simplify e) d
 differentiate :: Expr -> Expr
 differentiate (Num n)                   = Num 0
 differentiate (Var 'x')                 = Num 1
-differentiate (Mul e1 (Var 'x'))        = simplify e1
-differentiate (Add e1 e2)               = simplify (Add (differentiate e1) (differentiate e2))    --Sumregeln
-differentiate (Mul e1 e2)               = simplify (Add (Mul (differentiate e1) e2) (Mul e1 (differentiate e2))) --Kedjeregeln
-differentiate (Sin e1)                  = simplify (Mul (Cos e1) (differentiate e1))                                      
-differentiate (Cos e1)                  = simplify (Mul (Mul (Sin e1) (Num (-1))) (differentiate e1))
+differentiate (Operation Mul e1 (Var 'x'))        = simplify e1
+differentiate (Operation Add e1 e2)               = simplify (Operation Add (differentiate e1) (differentiate e2))    --Sumregeln
+differentiate (Operation Mul e1 e2)               = simplify (Operation Add (Operation Mul (differentiate e1) e2) (Operation Mul e1 (differentiate e2))) --Kedjeregeln
+differentiate (Function "Sin" e1)                  = simplify (Operation Mul (Function "Cos" e1) (differentiate e1))                                      
+differentiate (Function "Cos" e1)                  = simplify (Operation Mul (Operation Mul (Function "Sin" e1) (Num (-1))) (differentiate e1))
 
 

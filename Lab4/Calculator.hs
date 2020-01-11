@@ -60,7 +60,7 @@ readAndDraw input canvas zoom d =
      let scale' = read scale
 
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
-     UI.fillText (showExpr formula') (10,canHeight/2) canvas
+     UI.fillText (showExpr (simplify formula')) (10,canHeight/2) canvas
      path "blue" (points formula' scale' (300,300)) canvas        -- [(10,10),(canWidth-10,canHeight/2)] canvas
 
 
