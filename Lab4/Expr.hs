@@ -86,8 +86,6 @@ term = foldl1 (Operation Mul) <$> chain factor (char '*')
 factor = Num <$> number <|> do char '(' *> expr <* char ')' 
                 <|> Function "Sin" <$> mathFunc "Sin" <|> Function "Cos" <$> mathFunc "Cos" <|> Var <$> char 'x'
 
-
-
 number :: Parser Double
 number = read <$> oneOrMore (digit <|> char '.')
 
@@ -161,20 +159,21 @@ simplify (Operation Mul (Num 1) e1)        = simplify e1
 simplify (Operation Mul e1 (Num 1))        = simplify e1
 
 simplify (Operation Add e1 e2)
-        | e1 /= e1' && e2 /=e2' = simplify $ Operation Add (simplify e1) (simplify e2)
+        | e1 /= e1' || e2 /=e2' = simplify $ Operation Add (simplify e1) (simplify e2)
         | otherwise             = Operation Add (simplify e1) (simplify e2)
                 where   e1' = simplify e1
                         e2' = simplify e2
 
 simplify (Operation Mul e1 e2)  
-        | e1 /= e1' && e2 /=e2' = simplify $ Operation Mul (simplify e1) (simplify e2)
+        | e1 /= e1' || e2 /=e2' = simplify $ Operation Mul (simplify e1) (simplify e2)
         | otherwise             = Operation Mul (simplify e1) (simplify e2)
                 where   e1' = simplify e1
                         e2' = simplify e2  
-simplify e                       = e
-        
-
-prop_simplify e d = eval e d == eval (simplify e) d
+simplify e                      = e
+   
+prop_simplify e d = 
+        (eval e d == eval (simplify e) d)
+        && simplify e == simplify (simplify e)
 
 differentiate :: Expr -> Expr
 differentiate (Num n)                   = Num 0
